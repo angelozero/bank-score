@@ -1,0 +1,9 @@
+model_list:
+  - model_name: ai-angelo-zero
+    litellm_params:
+      model: ollama/llama3.2
+      api_base: "http://host.docker.internal:11434"
+      drop_params: True # added this line to suport base64
+      temperature: 0
+      extra_body:
+        repeat_penalty: 1.2
