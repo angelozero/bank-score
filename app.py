@@ -1,11 +1,21 @@
 import uvicorn
 from fastapi import FastAPI
+from src.service.upload_files import upload_files_execute
 from src.service.rag_service import execute as rag_execute
+from src.service.rag_langgraph_service import execute as rag_langgraph_execute
 app = FastAPI()
 
 @app.get("/")
 def root():
-    response = rag_execute()
+    # upload_files_execute()
+    
+    # query = input(f"\nDigite sua pergunta: ")
+    # if not query:
+    #     print("Nenhuma pergunta fornecida.")
+    #     return
+    
+    # rag_execute(query)
+    response = rag_langgraph_execute("123.456.789-00", 10000.0)
     return {"response": response}
 
 if __name__ == "__main__":

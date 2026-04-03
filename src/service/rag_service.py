@@ -9,25 +9,15 @@ from src.service.get_credit_analysis_prompt import get_credit_analysis_prompt
 from src.service.find_data_by_similarity_relevance_scores import (
     find_data_by_similarity_relevance_scores,
 )
-from src.tools.search_tool import search
 
 
-def execute():
+def execute(query_question):
     print("Executing RAG service...")
-    # Executar este trecho apenas uma vez para carregar os dados e persistir no banco de dados Chroma
-    # upload_files_execute()
 
-    # query = input(f"\nDigite sua pergunta: ")
-    # if not query:
-    #     print("Nenhuma pergunta fornecida.")
-    #     return
+    query = query_question or "Quais são as categorias da TABELA DE SCORE DE CRÉDITO?"
 
-    query = "Quais são as categorias da TABELA DE SCORE DE CRÉDITO?"
-
-    # --- #
-    # RAG #
-    # --- #
     embedding = get_embedding()
+    
     results = find_data_by_similarity_relevance_scores(
         embeddings=embedding, query=query, k=3
     )
@@ -42,16 +32,5 @@ def execute():
     data = get_chat_model()
     response = data.invoke(prompt)
 
-    # ----- #
-    # Tools #
-    # ----- #
-    tools = [search]
-    agent = create_agent(
-        model=data, tools=tools, debug=True, response_format=AgentResponse
-    )
-    response_tools = agent.invoke(
-        get_credit_analysis_prompt(), config={"recursion_limit": 10}
-    )
-
-    print(f"\nResposta:\n{response.content}\n\n")
-    return [{"RAG": response.content}, {"Tools": response_tools}]
+    print(f"\Response:\n{response.content}\n\n")
+    return {"Response": response}

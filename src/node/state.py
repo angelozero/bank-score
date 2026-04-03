@@ -1,57 +1,82 @@
 import re
-
 from typing import Annotated, Literal, TypedDict
 from langgraph.graph import END, START, StateGraph, add_messages
 from langgraph.checkpoint.memory import MemorySaver
+from src.service.rag_langgraph_service import execute as rag_execute
+
 
 class CreditState(TypedDict):
-    # add_messages faz o "merge" automático das listas (histórico)
     messages: Annotated[list[str], add_messages]
     cpf_original: str
     cpf_masked: str
     amount: float
     is_approved: bool
     analysis_report: str
+    # Campo para a classificação da IA
+    client_pattern: Literal["CONSERVADOR", "RISCO", "EXCECAO", "BLOQUEIO"]
+
 
 # ----- #
 # Nodes #
-# ----- # 
+# ----- #
 def guardrails_node(state: CreditState):
     """Mascara o CPF antes de qualquer processamento com LLM."""
     cpf = state["cpf_original"]
+    # Regex simples para o exemplo
     masked = re.sub(r"(\d{3})\.(\d{3})\.(\d{3})-(\d{2})", r"\1.***.***-\4", cpf)
-    return {"cpf_masked": masked, "messages": [f"CPF detectado e mascarado: {masked}"]}
+    return {"cpf_masked": masked, "messages": [f"SISTEMA: CPF mascarado para {masked}"]}
+
 
 def analysis_node(state: CreditState):
     """
-    Simula a chamada ao LiteLLM + RAG.
-    Aqui você usaria o seu prompt de 'Analista Sênior'.
+    Nó de Auditoria Cognitiva (Simulando LiteLLM + RAG).
+    A IA agora identifica o padrão baseado na política (itens 2, 7, 8 e 10).
     """
     amount = state["amount"]
-    # Simulando lógica baseada no PDF de Política
-    report = f"Análise para R$ {amount}: "
-    if amount > 5000:
-        report += "Valor excede limite automático. Requer Gerente."
-    else:
-        report += "Perfil elegível para aprovação automática."
-        
-    return {"analysis_report": report, "messages": [report]}
+    masked_cpf = state["cpf_masked"]
+
+    # --- SIMULAÇÃO FIXA ---
+    # Na vida real, aqui você passaria o PDF da política para a LLM
+    # if amount > 10000:
+    #     pattern = "RISCO"
+    #     report = f"PARECER IA: Valor de R$ {amount} muito elevado. Requer verificação de garantias (Item 2.C)."
+    # elif "888" in masked_cpf:  # Simulando um alerta de fraude/região
+    #     pattern = "RISCO"
+    #     report = (
+    #         "PARECER IA: Suspeita de inconsistência regional ou urgência (Item 7/8)."
+    #     )
+    # else:
+    #     pattern = "CONSERVADOR"
+    #     report = f"PARECER IA: Cliente se enquadra no padrão de baixo risco para R$ {amount}."
+    # ------------------------------------
+    
+    # --- SIMULAÇÃO DE CHAMADA RAG/LLM ---
+    response = rag_execute(masked_cpf, amount)
+
+    return {"analysis_report": response, "client_pattern": pattern, "messages": [response]}
+
 
 def manager_node(state: CreditState):
-    """
-    Nó de pausa. O grafo vai parar ANTES de entrar aqui.
-    Quando o gerente aprova, o estado 'is_approved' é atualizado.
-    """
-    print("\n[Aguardando interação do Gerente no Banco de Dados...]")
-    return state # O nó apenas retorna o estado atualizado após o 'resume'
+    """Nó de pausa para o Gerente."""
+    print(f"\n[ALERTA] Gerente, analise o relatório: {state['analysis_report']}")
+    return state
+
 
 # ----------- #
-# Condicional #
+# CONDICIONAL #
 # ----------- #
-def route_request(state: CreditState) -> Literal["automatic", "manual"]:
-    if state["amount"] > 5000:
-        return "manual"
-    return "automatic"
+def route_request(state: CreditState) -> Literal["to_manager", "to_auto_check"]:
+    """
+    Roteamento baseado no 'insight' da IA e não apenas no valor bruto.
+    """
+    pattern = state.get("client_pattern")
+
+    # De acordo com sua nova estratégia, se for RISCO ou valor alto, vai para o Gerente
+    if pattern == "RISCO" or state["amount"] > 5000:
+        return "to_manager"
+
+    return "to_auto_check"
+
 
 # ----- #
 # GRAFO #
@@ -61,30 +86,34 @@ builder = StateGraph(CreditState)
 builder.add_node("guardrails", guardrails_node)
 builder.add_node("analysis", analysis_node)
 builder.add_node("manager_approval", manager_node)
-builder.add_node("auto_approve", lambda s: {"is_approved": True, "messages": ["Aprovado automaticamente"]})
-
+# Nó final de sucesso (Simulando uma aprovação que ainda passa por check final)
+builder.add_node(
+    "auto_approve",
+    lambda s: {
+        "is_approved": True,
+        "messages": ["SISTEMA: Processo concluído com aprovação."],
+    },
+)
 builder.add_edge(START, "guardrails")
 builder.add_edge("guardrails", "analysis")
 
-# Roteamento Inteligente
-builder.add_conditional_edges("analysis", route_request, {
-    "manual": "manager_approval",
-    "automatic": "auto_approve"
-})
+# A lógica de decisão agora lê o 'client_pattern' gerado pela IA
+builder.add_conditional_edges(
+    "analysis",
+    route_request,
+    {"to_manager": "manager_approval", "to_auto_check": "auto_approve"},
+)
 
 builder.add_edge("manager_approval", END)
 builder.add_edge("auto_approve", END)
 
-# 5. Compilação com Checkpointer e Interrupção
+# O grafo vai pausar SEMPRE que o destino for 'manager_approval'
 memory = MemorySaver()
-graph = builder.compile(
-    checkpointer=memory, 
-    interrupt_before=["manager_approval"] # PAUSA
-)
+graph = builder.compile(checkpointer=memory, interrupt_before=["manager_approval"])
 
 if __name__ == "__main__":
     try:
-        graph.get_graph().draw_mermaid_png(output_file_path='graph.png')
+        graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
         print("Grafo gerado com sucesso!")
     except Exception as e:
         print(f"Erro ao gerar imagem: {e}")

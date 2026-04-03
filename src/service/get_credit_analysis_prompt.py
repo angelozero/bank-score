@@ -1,6 +1,6 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
-def get_credit_analysis_prompt():
+def get_credit_analysis_prompt(cpf, amount):
     return {
         "messages": [
             SystemMessage(
@@ -18,7 +18,7 @@ def get_credit_analysis_prompt():
             ),
             HumanMessage(
                 content=(
-                    "O cliente com CPF 764.***.***-44 solicitou um crédito de R$ 6.500,00. "
+                    f"O cliente com CPF {cpf} solicitou um crédito de R$ {amount}. "
                     "Com base na nossa política de crédito, qual o procedimento correto para este caso?"
                 )
             ),
