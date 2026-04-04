@@ -13,6 +13,7 @@ BASE_URL = os.getenv("BASE_URL")
 
 
 def chat_model():
+    print("[XX] - Inicializando LLM para serviço de chat...")
     """
     Initializes and returns the Chat Model (LLM) instance.
     Uses LiteLLM proxy via OpenAI-compatible interface.
@@ -26,6 +27,7 @@ def chat_model():
 
 
 def get_embedding():
+    print("[03] - Inicializando LLM para serviço de embeddings...")
     """
     Initializes and returns the Embeddings instance.
     Configured to handle float encoding format for Ollama compatibility.

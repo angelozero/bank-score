@@ -1,6 +1,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
-def get_risk_analysis(cpf, amount, last_context):
+def get_risk_analysis_prompt(cpf, amount, last_context):
+    print("[08] - Obtendo prompt para análise de risco...")
     return {
         "messages": [
             SystemMessage(

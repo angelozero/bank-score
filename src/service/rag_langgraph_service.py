@@ -1,17 +1,14 @@
-from langchain.agents import create_agent
-
+from src.service.get_llm_with_tools import get_llm_with_tools
+from src.service.get_client_analysis_risk_descritpion import get_client_analysis_risk_descritpion
+from src.service.get_context_by_results import get_context_by_results
+from src.service.get_results_by_relevance_score import get_results_by_relevance_score
 from src.agent.agent_langgraph_model import LangGraphSource, LangGraphAgentResponse
-from src.service.get_chat_model import get_chat_model
-from src.service.get_risk_analysis_prompt import get_risk_analysis
-from src.service.get_embedding_service import get_embedding
-from src.service.find_data_by_similarity_relevance_scores import (
-    find_data_by_similarity_relevance_scores,
-)
+from src.service.get_risk_analysis_prompt import get_risk_analysis_prompt
 from src.tools.validate_credit_policy_tool import validate_credit_policy
 
 
 def execute(cpf, amount):
-    print("Executing RAG LANGGGRAPH service...")
+    print(f"\n[01] - Executing RAG service...")
 
     query = (
         f"Realize a auditoria de crédito para o valor de R$ {amount} "
@@ -20,30 +17,18 @@ def execute(cpf, amount):
         "Retorne o padrão do cliente e o relatório conforme o protocolo do Item 10."
     )
 
-    # --- #
-    # RAG #
-    # --- #
-    embedding = get_embedding()
-    results = find_data_by_similarity_relevance_scores(
-        embeddings=embedding, query=query, k=3
-    )
+    results = get_results_by_relevance_score(query)
 
-    if not results or results[0][1] < 0.2:
-        print(f"\n\nNão foi possível encontrar resultados relevantes.\n\n")
-        return
+    context = get_context_by_results(results)
 
-    context_text = "\n".join([doc.page_content for doc, _score in results])
+    analysis_risk_description = get_client_analysis_risk_descritpion(context, query)
 
-    model = get_chat_model()
-    
-    llm = model.bind_tools([validate_credit_policy])
+    prompt = get_risk_analysis_prompt(cpf, amount, analysis_risk_description)
 
-    structured_llm = llm.with_structured_output(LangGraphAgentResponse)
-
-    prompt = get_risk_analysis(cpf, amount, context_text)
+    llm = get_llm_with_tools(validate_credit_policy)
 
     try:
-        response = structured_llm.invoke(prompt["messages"])
+        response = llm.invoke(prompt["messages"])
 
         if isinstance(response, LangGraphAgentResponse):
             response.sources = [
@@ -61,3 +46,9 @@ def execute(cpf, amount):
     except Exception as e:
         print(f"Erro ao processar resposta estruturada: {e}")
         return None
+
+
+
+
+
+
