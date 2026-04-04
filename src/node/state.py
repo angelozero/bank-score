@@ -2,7 +2,7 @@ import re
 from typing import Annotated, Literal, TypedDict
 from langgraph.graph import END, START, StateGraph, add_messages
 from langgraph.checkpoint.memory import MemorySaver
-from src.service.rag_langgraph_service import execute as rag_execute
+from service.rag_service import execute as rag_execute
 
 
 class CreditState(TypedDict):

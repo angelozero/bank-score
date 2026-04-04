@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from src.service.upload_files import upload_files_execute
 from src.service.rag_service import execute as rag_execute
-from src.service.rag_langgraph_service import execute as rag_langgraph_execute
+from service.rag_service import execute as rag_langgraph_execute
 
 
 app = FastAPI()

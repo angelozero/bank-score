@@ -1,36 +1,54 @@
-from langchain.agents import create_agent
-
-from src.agent.agent_base_model import AgentResponse
-from src.service.generate_prompt import generate_prompt
-from src.service.get_embedding_service import get_embedding
-from src.service.upload_files import upload_files_execute
-from src.service.get_chat_model import get_chat_model
-from src.service.get_credit_analysis_prompt import get_credit_analysis_prompt
-from src.service.find_data_by_similarity_relevance_scores import (
-    find_data_by_similarity_relevance_scores,
-)
+from src.service.get_llm_with_tools import get_llm_with_tools
+from src.service.get_client_analysis_risk_descritpion import get_client_analysis_risk_descritpion
+from src.service.get_context_by_results import get_context_by_results
+from src.service.get_results_by_relevance_score import get_results_by_relevance_score
+from src.agent.agent_langgraph_model import LangGraphSource, LangGraphAgentResponse
+from src.service.get_risk_analysis_prompt import get_risk_analysis_prompt
+from src.tools.validate_credit_policy_tool import validate_credit_policy
 
 
-def execute(query_question):
-    print("Executing RAG service...")
+def execute(cpf, amount):
+    print(f"\n[01] - Executing RAG service...")
 
-    query = query_question or "Quais são as categorias da TABELA DE SCORE DE CRÉDITO?"
-
-    embedding = get_embedding()
-    
-    results = find_data_by_similarity_relevance_scores(
-        embeddings=embedding, query=query, k=3
+    query = (
+        f"Realize a auditoria de crédito para o valor de R$ {amount} "
+        f"e CPF {cpf}. Verifique o enquadramento nas faixas de score, "
+        "possíveis fatores de impedimento do Item 3 e regras de 'Geographic Override' do Item 7. "
+        "Retorne o padrão do cliente e o relatório conforme o protocolo do Item 10."
     )
 
-    if not results or results[0][1] < 0.2:
-        print(f"\n\nNão foi possível encontrar resultados relevantes.\n\n")
-        return
+    results = get_results_by_relevance_score(query)
 
-    context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
+    context = get_context_by_results(results)
 
-    prompt = generate_prompt(context_text, query)
-    data = get_chat_model()
-    response = data.invoke(prompt)
+    analysis_risk_description = get_client_analysis_risk_descritpion(context, query)
 
-    print(f"\Response:\n{response.content}\n\n")
-    return {"Response": response}
+    prompt = get_risk_analysis_prompt(cpf, amount, analysis_risk_description)
+
+    llm = get_llm_with_tools(validate_credit_policy)
+
+    try:
+        response = llm.invoke(prompt["messages"])
+
+        if isinstance(response, LangGraphAgentResponse):
+            response.sources = [
+                LangGraphSource(
+                    url=doc.metadata.get("url", "N/A"),
+                    title=doc.metadata.get("title", "Documento"),
+                    relevance_score=float(score),
+                )
+                for doc, score in results
+            ]
+
+            print(f"\nResposta Estruturada:\n{response.answer}")
+            return response.answer
+
+    except Exception as e:
+        print(f"Erro ao processar resposta estruturada: {e}")
+        return None
+
+
+
+
+
+
