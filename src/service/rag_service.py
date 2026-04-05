@@ -32,17 +32,7 @@ def execute(cpf, amount):
     try:
         response = llm.invoke(prompt["messages"])
 
-        if isinstance(response, LangGraphAgentResponse):
-            response.sources = [
-                LangGraphSource(
-                    url=doc.metadata.get("url", "N/A"),
-                    title=doc.metadata.get("title", "Documento"),
-                    relevance_score=float(score),
-                )
-                for doc, score in results
-            ]
-
-            return {"response": response}
+        return {"data": response}
 
     except Exception as e:
         print(f"Erro ao processar resposta estruturada: {e}")

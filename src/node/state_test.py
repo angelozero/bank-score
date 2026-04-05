@@ -57,7 +57,7 @@ def execute_manager_aproval_test(thread_id: str, is_approved: bool = True):
     final_snapshot = graph.get_state(config)
     print("\n=== FLUXO FINALIZADO PELO GERENTE ===")
     print(f"Status Final de Aprovação: {final_snapshot.values.get('is_approved')}")
-    print(f"Mensagens Finais: {final_snapshot.values.get('messages')[-1]}")
+    print(f"Mensagens Finais: {final_snapshot.values.get('messages')}")
 
 if __name__ == "__main__":
     execute_test()

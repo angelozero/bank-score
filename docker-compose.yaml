@@ -1,13 +1,35 @@
 services:
   litellm:
-    image: litellm/litellm
+    image: litellm/litellm:latest
     container_name: bank-score
-    #platform: linux/arm64
     ports:
       - "4000:4000"
     volumes:
       - ./config.yaml:/app/config.yaml
+    environment:
+      # Apontamos para a porta interna 3000 de cada container
+      - PRESIDIO_ANALYZER_API_BASE=http://presidio-analyzer:3000
+      - PRESIDIO_ANONYMIZER_API_BASE=http://presidio-anonymizer:3000
     command: ["--config", "/app/config.yaml", "--detailed_debug"]
+    depends_on:
+      - presidio-analyzer
+      - presidio-anonymizer
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Serviço que identifica o PII (CPF, Nomes, etc)
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    container_name: presidio-analyzer
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+
+  # Serviço que aplica a máscara
+  presidio-anonymizer:
+    image: mcr.microsoft.com/presidio-anonymizer:latest
+    container_name: presidio-anonymizer
+    environment:
+      - PORT=3000
     restart: unless-stopped

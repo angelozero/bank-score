@@ -8,4 +8,7 @@ class LangGraphSource(BaseModel):
 
 class LangGraphAgentResponse(BaseModel):
     answer: str = Field(description="Resposta detalhada da auditoria de crédito")
+    # Novos campos para o relatório
+    client_cpf: str = Field(description="CPF do cliente (formato mascarado)")
+    requested_amount: float = Field(description="Valor solicitado na auditoria")
     sources: List[LangGraphSource] = Field(default_factory=list, description="Fontes utilizadas no RAG")

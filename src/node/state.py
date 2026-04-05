@@ -26,11 +26,12 @@ class CreditState(TypedDict):
 # Nodes #
 # ----- #
 def guardrails_node(state: CreditState):
-    """Mascara o CPF antes de qualquer processamento com LLM."""
-    cpf = state["cpf_original"]
-    # Regex simples para o exemplo
-    masked = re.sub(r"(\d{3})\.(\d{3})\.(\d{3})-(\d{2})", r"\1.***.***-\4", cpf)
-    return {"cpf_masked": masked, "messages": [f"SISTEMA: CPF mascarado para {masked}"]}
+    """
+    Agora este nó apenas limpa o estado ou prepara os dados,
+    pois o LiteLLM cuidará do mascaramento.
+    """
+    print(f"\nCPF Original: {state['cpf_original']}\n")
+    return {"cpf_masked": state["cpf_original"]}
 
 
 def analysis_node(state: CreditState):
@@ -39,34 +40,21 @@ def analysis_node(state: CreditState):
     A IA agora identifica o padrão baseado na política (itens 2, 7, 8 e 10).
     """
     amount = state["amount"]
-    masked_cpf = state["cpf_masked"]
-
-    # --- SIMULAÇÃO FIXA ---
-    # Na vida real, aqui você passaria o PDF da política para a LLM
-    # if amount > 10000:
-    #     pattern = "RISCO"
-    #     report = f"PARECER IA: Valor de R$ {amount} muito elevado. Requer verificação de garantias (Item 2.C)."
-    # elif "888" in masked_cpf:  # Simulando um alerta de fraude/região
-    #     pattern = "RISCO"
-    #     report = (
-    #         "PARECER IA: Suspeita de inconsistência regional ou urgência (Item 7/8)."
-    #     )
-    # else:
-    #     pattern = "CONSERVADOR"
-    #     report = f"PARECER IA: Cliente se enquadra no padrão de baixo risco para R$ {amount}."
-    # ------------------------------------
+    raw_cpf = state["cpf_original"]
 
     # --- SIMULAÇÃO DE CHAMADA RAG/LLM ---
-    result = rag_execute(masked_cpf, amount)
+    result = rag_execute(raw_cpf, amount)
 
     try:
         agent_response = result["response"]
         response_text = agent_response.answer
+        masked_cpf = state["cpf_masked"]
 
     except (KeyError, AttributeError):
         response_text = "ERRO: Resposta da IA em formato inválido."
 
-    return {"analysis_report": response_text}
+    print(f"\nCPF Mascarado: {state['cpf_masked']}\n")
+    return {"analysis_report": response_text, "cpf": masked_cpf}
 
 
 def manager_node(state: CreditState):

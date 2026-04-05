@@ -3,7 +3,24 @@ model_list:
     litellm_params:
       model: ollama/llama3.2
       api_base: "http://host.docker.internal:11434"
-      drop_params: True # added this line to suport base64
+      drop_params: True
       temperature: 0
-      extra_body:
-        repeat_penalty: 1.2
+
+litellm_settings:
+  callbacks: ["presidio"]
+
+presidio_settings:
+  presidio_analyzer_api_base: "http://presidio-analyzer:3000"
+  presidio_anonymizer_api_base: "http://presidio-anonymizer:3000"
+  ad_hoc_recognizers: >
+    [{
+      "name": "BRAZIL_CPF",
+      "regex": "(\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2})|(\\d{11})",
+      "score": 1.0,
+      "type": "PATTERN",
+      "entity": "BRAZIL_CPF"
+    }]
+  operations:
+    default:
+      operation: "replace"
+      new_value: "XXX.***.***-XX"
