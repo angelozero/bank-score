@@ -1,0 +1,19 @@
+[
+  {
+    "name": "BrazilCpfRecognizer",
+    "supported_language": "en",
+    "patterns": [
+      {
+        "name": "cpf_with_dots",
+        "regex": "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}",
+        "score": 1.0
+      },
+      {
+        "name": "cpf_digits_only",
+        "regex": "\\b\\d{11}\\b",
+        "score": 0.6
+      }
+    ],
+    "supported_entity": "BRAZIL_CPF"
+  }
+]

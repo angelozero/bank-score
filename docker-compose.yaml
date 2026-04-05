@@ -6,8 +6,8 @@ services:
       - "4000:4000"
     volumes:
       - ./config.yaml:/app/config.yaml
+      - ./presidio_ad_hoc_recognizers.json:/app/presidio_ad_hoc_recognizers.json
     environment:
-      # Apontamos para a porta interna 3000 de cada container
       - PRESIDIO_ANALYZER_API_BASE=http://presidio-analyzer:3000
       - PRESIDIO_ANONYMIZER_API_BASE=http://presidio-anonymizer:3000
     command: ["--config", "/app/config.yaml", "--detailed_debug"]
@@ -26,10 +26,21 @@ services:
       - PORT=3000
     restart: unless-stopped
 
-  # Serviço que aplica a máscara
-  presidio-anonymizer:
+  # Serviço real do Presidio Anonymizer (upstream)
+  presidio-anonymizer-upstream:
     image: mcr.microsoft.com/presidio-anonymizer:latest
+    container_name: presidio-anonymizer-upstream
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+
+  # Proxy que injeta operators customizados antes de encaminhar ao anonymizer real
+  presidio-anonymizer:
+    build: ./anonymizer_proxy
     container_name: presidio-anonymizer
     environment:
       - PORT=3000
+      - ANONYMIZER_UPSTREAM=http://presidio-anonymizer-upstream:3000
+    depends_on:
+      - presidio-anonymizer-upstream
     restart: unless-stopped

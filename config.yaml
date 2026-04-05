@@ -6,21 +6,14 @@ model_list:
       drop_params: True
       temperature: 0
 
-litellm_settings:
-  callbacks: ["presidio"]
-
-presidio_settings:
-  presidio_analyzer_api_base: "http://presidio-analyzer:3000"
-  presidio_anonymizer_api_base: "http://presidio-anonymizer:3000"
-  ad_hoc_recognizers: >
-    [{
-      "name": "BRAZIL_CPF",
-      "regex": "(\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2})|(\\d{11})",
-      "score": 1.0,
-      "type": "PATTERN",
-      "entity": "BRAZIL_CPF"
-    }]
-  operations:
-    default:
-      operation: "replace"
-      new_value: "XXX.***.***-XX"
+guardrails:
+  - guardrail_name: "pii-masking"
+    litellm_params:
+      guardrail: presidio
+      mode: "pre_call"
+      default_on: true
+      presidio_analyzer_api_base: "http://presidio-analyzer:3000"
+      presidio_anonymizer_api_base: "http://presidio-anonymizer:3000"
+      presidio_ad_hoc_recognizers: "/app/presidio_ad_hoc_recognizers.json"
+      output_parse_pii: false
+      presidio_language: "en"

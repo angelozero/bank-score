@@ -4,11 +4,12 @@ from src.service.get_client_analysis_risk_descritpion import (
 )
 from src.service.get_context_by_results import get_context_by_results
 from src.service.get_results_by_relevance_score import get_results_by_relevance_score
-from src.agent.agent_langgraph_model import LangGraphSource, LangGraphAgentResponse
 from src.service.get_risk_analysis_prompt import get_risk_analysis_prompt
 from src.tools.validate_credit_policy_tool import validate_credit_policy
 
+from langsmith import traceable
 
+# @traceable(name="LangChain and LangGraph RAG Service", metadata={"version": "1.0"})
 def execute(cpf, amount):
     print(f"\n[01] - Executing RAG service...")
 
