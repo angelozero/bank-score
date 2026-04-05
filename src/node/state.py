@@ -1,8 +1,14 @@
 import re
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
 from typing import Annotated, Literal, TypedDict
+from urllib import response
 from langgraph.graph import END, START, StateGraph, add_messages
 from langgraph.checkpoint.memory import MemorySaver
-from service.rag_service import execute as rag_execute
+from src.service.rag_service import execute as rag_execute
 
 
 class CreditState(TypedDict):
@@ -49,11 +55,18 @@ def analysis_node(state: CreditState):
     #     pattern = "CONSERVADOR"
     #     report = f"PARECER IA: Cliente se enquadra no padrão de baixo risco para R$ {amount}."
     # ------------------------------------
-    
-    # --- SIMULAÇÃO DE CHAMADA RAG/LLM ---
-    response = rag_execute(masked_cpf, amount)
 
-    return {"analysis_report": response, "client_pattern": pattern, "messages": [response]}
+    # --- SIMULAÇÃO DE CHAMADA RAG/LLM ---
+    result = rag_execute(masked_cpf, amount)
+
+    try:
+        agent_response = result["response"]
+        response_text = agent_response.answer
+
+    except (KeyError, AttributeError):
+        response_text = "ERRO: Resposta da IA em formato inválido."
+
+    return {"analysis_report": response_text}
 
 
 def manager_node(state: CreditState):

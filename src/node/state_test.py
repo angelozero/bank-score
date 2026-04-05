@@ -33,20 +33,20 @@ def execute_test():
     print("\n=== ESTADO FINAL DO OBJETO NO TERMINAL ===")
     print(final_state)
 
-def execute_manager_aproval_test(thread_id: str):
+def execute_manager_aproval_test(thread_id: str, is_approved: bool = True):
     config = {"configurable": {"thread_id": thread_id}}
     
     print(f"\n=== [GERENTE] ACESSANDO PROPOSTA: {thread_id} ===")
     
     # 1. O Gerente visualiza como está o estado atual
     current_state = graph.get_state(config)
-    print(f"Valor solicitado: {current_state.values.get('amount')}")
-    print(f"Análise da IA: {current_state.values.get('analysis_report')}")
+    print(f"[01] - Valor solicitado: {current_state.values.get('amount')}")
+    print(f"[02] - Análise da IA: {current_state.values.get('analysis_report')}")
 
     # 2. O Gerente decide aprovar (Intervenção Manual)
     # Nós atualizamos o campo 'is_approved' diretamente no banco de checkpoints
-    print("\n[Gerente]: 'Análise ok, vou aprovar este crédito.'")
-    graph.update_state(config, {"is_approved": True})
+    print(f"\n[03]: O gerente aprovou esta análise ? {is_approved}")
+    graph.update_state(config, {"is_approved": is_approved})
 
     # 3. O Gerente manda o grafo CONTINUAR
     # Passamos 'None' porque não estamos iniciando um novo fluxo, 
@@ -61,4 +61,4 @@ def execute_manager_aproval_test(thread_id: str):
 
 if __name__ == "__main__":
     execute_test()
-    execute_manager_aproval_test("user_01")
+    execute_manager_aproval_test("user_01", False)

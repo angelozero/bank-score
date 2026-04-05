@@ -1,5 +1,7 @@
 from src.service.get_llm_with_tools import get_llm_with_tools
-from src.service.get_client_analysis_risk_descritpion import get_client_analysis_risk_descritpion
+from src.service.get_client_analysis_risk_descritpion import (
+    get_client_analysis_risk_descritpion,
+)
 from src.service.get_context_by_results import get_context_by_results
 from src.service.get_results_by_relevance_score import get_results_by_relevance_score
 from src.agent.agent_langgraph_model import LangGraphSource, LangGraphAgentResponse
@@ -40,15 +42,8 @@ def execute(cpf, amount):
                 for doc, score in results
             ]
 
-            print(f"\nResposta Estruturada:\n{response.answer}")
-            return response.answer
+            return {"response": response}
 
     except Exception as e:
         print(f"Erro ao processar resposta estruturada: {e}")
         return None
-
-
-
-
-
-

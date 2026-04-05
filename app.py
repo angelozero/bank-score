@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from src.service.upload_files import upload_files_execute
 from src.service.rag_service import execute as rag_execute
-from service.rag_service import execute as rag_langgraph_execute
+from src.service.rag_service import execute as rag_langgraph_execute
 
 
 app = FastAPI()
@@ -23,9 +23,8 @@ def root():
     #     return
     
     # rag_execute(query)
-    response = rag_langgraph_execute("123.456.789-00", 10000.0)
-    return {"response": response}
-
+    return rag_langgraph_execute("123.456.789-00", 10000.0)
+    
 @app.post("/")
 def root(dados: SolicitacaoRAG):
     # O FastAPI extrai o JSON e transforma no objeto 'dados'
