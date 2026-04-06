@@ -5,6 +5,7 @@
 | FastAPI |
 | LangChain |
 | LangGraph |
+| LangSmith |
 | Ollama/Llama 3.2 (local) |
 | ChromaDB |
 | LiteLLM |

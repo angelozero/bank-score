@@ -9,7 +9,8 @@ from src.tools.validate_credit_policy_tool import validate_credit_policy
 
 from langsmith import traceable
 
-# @traceable(name="LangChain and LangGraph RAG Service", metadata={"version": "1.0"})
+
+@traceable(name="LangChain and LangGraph RAG Service", metadata={"version": "1.0"})
 def execute(cpf, amount):
     print(f"\n[01] - Executing RAG service...")
 
